@@ -1,4 +1,4 @@
-name: Deploy to AWS EC2
+name: 🚀 IT Words Learning - AWS EC2 自动部署
 
 on:
   push:
@@ -15,36 +15,63 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
+    - name: 📥 检出代码
       uses: actions/checkout@v4
+      
+    - name: 🌟 开始部署流程
+      run: |
+        echo "🚀 开始 IT Words Learning 项目自动部署"
+        echo "================================================="
+        echo "📅 部署时间: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "🌍 部署环境: AWS EC2"
+        echo "📦 Node.js 版本: ${{ env.NODE_VERSION }}"
+        echo "☕ Java 版本: ${{ env.JAVA_VERSION }}"
+        echo "================================================="
 
-    - name: Setup Node.js
+    - name: 🔧 配置 Node.js 环境
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         cache-dependency-path: 'code-and-project-files/package-lock.json'
+        
+    - name: ✅ Node.js 环境配置完成
+      run: |
+        echo "✅ Node.js 环境配置完成"
+        echo "📦 Node.js 版本: $(node --version)"
+        echo "📦 npm 版本: $(npm --version)"
 
-    - name: Setup Java
+    - name: ☕ 配置 Java 环境
       uses: actions/setup-java@v4
       with:
         java-version: ${{ env.JAVA_VERSION }}
         distribution: 'temurin'
+        
+    - name: ✅ Java 环境配置完成
+      run: |
+        echo "✅ Java 环境配置完成"
+        echo "☕ Java 版本: $(java --version | head -1)"
+        echo "🔨 Maven 版本: $(mvn --version | head -1)"
 
-    - name: Cache Maven dependencies
+    - name: 📦 缓存 Maven 依赖
       uses: actions/cache@v3
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
 
-    - name: Copy project files to build directories
+    - name: 📂 准备项目文件
       run: |
+        echo "📂 开始准备项目文件..."
+        
         # Create build directories
+        echo "📁 创建构建目录..."
         mkdir -p build/frontend-app
         mkdir -p build/backend-api
+        echo "✅ 构建目录创建完成"
         
         # Copy frontend files
+        echo "🎨 复制前端文件..."
         cp code-and-project-files/package.json build/frontend-app/
         cp code-and-project-files/package-lock.json build/frontend-app/
         cp code-and-project-files/vite.config.js build/frontend-app/
@@ -54,188 +81,329 @@ jobs:
         # Override with main app files
         cp code-and-project-files/App.vue build/frontend-app/src/
         cp code-and-project-files/main.js build/frontend-app/src/
+        echo "✅ 前端文件复制完成"
         
         # Copy backend files
+        echo "⚙️ 复制后端文件..."
         cp code-and-project-files/pom.xml build/backend-api/
         cp code-and-project-files/mvnw build/backend-api/
         cp code-and-project-files/mvnw.cmd build/backend-api/
         cp -r project-structure/backend-api/src build/backend-api/
         cp -r project-structure/backend-api/.mvn build/backend-api/
+        echo "✅ 后端文件复制完成"
         
-    - name: Build Frontend
+        echo "🎉 项目文件准备完成！"
+        
+    - name: 🎨 构建前端应用
       run: |
+        echo "🎨 开始构建前端应用..."
         cd build/frontend-app
-        npm ci
-        npm run build
         
-    - name: Build Backend
+        echo "📦 安装前端依赖..."
+        npm ci
+        echo "✅ 前端依赖安装完成"
+        
+        echo "🔨 构建前端应用..."
+        npm run build
+        echo "✅ 前端应用构建完成"
+        
+        echo "📊 构建结果:"
+        ls -la dist/
+        
+    - name: ⚙️ 构建后端应用
       run: |
+        echo "⚙️ 开始构建后端应用..."
         cd build/backend-api
+        
+        echo "🔑 设置执行权限..."
         chmod +x mvnw
+        echo "✅ 执行权限设置完成"
+        
+        echo "🔨 构建后端应用 (跳过测试)..."
         ./mvnw clean package -DskipTests
+        echo "✅ 后端应用构建完成"
+        
+        echo "📊 构建结果:"
+        ls -la target/*.jar
 
-    - name: Create deployment package
+    - name: 📦 创建部署包
       run: |
+        echo "📦 开始创建部署包..."
         mkdir -p deploy
         
         # Copy frontend build
+        echo "🎨 复制前端构建文件..."
         cp -r build/frontend-app/dist deploy/frontend
+        echo "✅ 前端构建文件复制完成"
         
         # Copy backend JAR
+        echo "⚙️ 复制后端 JAR 文件..."
         cp build/backend-api/target/*.jar deploy/backend.jar
+        echo "✅ 后端 JAR 文件复制完成"
         
         # Copy deployment scripts
+        echo "📋 复制部署脚本和配置文件..."
         cp scripts-and-configs/database-setup.sql deploy/
         cp scripts-and-configs/nginx.conf deploy/
         cp scripts-and-configs/docker-compose.yml deploy/
         cp scripts-and-configs/production.properties deploy/
+        echo "✅ 部署脚本和配置文件复制完成"
         
         # Create deployment script
+        echo "📝 创建 EC2 部署脚本..."
         cat > deploy/deploy.sh << 'EOF'
         #!/bin/bash
         set -e
         
-        echo "🚀 Starting deployment..."
+        echo "🚀 开始在 EC2 上部署 IT Words Learning..."
+        echo "================================================="
         
         # Update system
+        echo "🔄 更新系统包..."
         sudo yum update -y
+        echo "✅ 系统更新完成"
         
         # Install Docker if not exists
         if ! command -v docker &> /dev/null; then
+            echo "🐳 安装 Docker..."
             sudo yum install -y docker
             sudo systemctl start docker
             sudo systemctl enable docker
             sudo usermod -a -G docker ec2-user
+            echo "✅ Docker 安装完成"
+        else
+            echo "✅ Docker 已安装"
         fi
         
         # Install Docker Compose if not exists
         if ! command -v docker-compose &> /dev/null; then
+            echo "🐳 安装 Docker Compose..."
             sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
+            echo "✅ Docker Compose 安装完成"
+        else
+            echo "✅ Docker Compose 已安装"
         fi
         
         # Install Java 17 if not exists
         if ! command -v java &> /dev/null; then
+            echo "☕ 安装 Java 17..."
             sudo yum install -y java-17-amazon-corretto-headless
+            echo "✅ Java 17 安装完成"
+        else
+            echo "✅ Java 已安装: $(java --version | head -1)"
         fi
         
         # Install MySQL if not exists
         if ! command -v mysql &> /dev/null; then
+            echo "🗄️ 安装 MySQL..."
             sudo yum install -y mysql mysql-server
             sudo systemctl start mysqld
             sudo systemctl enable mysqld
+            echo "✅ MySQL 安装完成"
+        else
+            echo "✅ MySQL 已安装"
         fi
         
         # Setup application directory
+        echo "📁 设置应用目录..."
         sudo mkdir -p /opt/itwords
         sudo chown ec2-user:ec2-user /opt/itwords
+        echo "✅ 应用目录设置完成"
         
         # Copy files
+        echo "📄 复制应用文件..."
         cp backend.jar /opt/itwords/
         cp -r frontend /opt/itwords/
         cp database-setup.sql /opt/itwords/
         cp nginx.conf /opt/itwords/
         cp docker-compose.yml /opt/itwords/
         cp production.properties /opt/itwords/application.properties
+        echo "✅ 应用文件复制完成"
         
         # Setup database
+        echo "🗄️ 设置数据库..."
         if ! mysql -u root -e "USE mysql_itwordslearning;" 2>/dev/null; then
-            echo "Setting up database..."
+            echo "🗄️ 创建数据库和表..."
             mysql -u root < database-setup.sql
+            echo "✅ 数据库设置完成"
+        else
+            echo "✅ 数据库已存在"
         fi
         
         # Stop existing services
+        echo "🛑 停止现有服务..."
         sudo pkill -f "backend.jar" || true
         sudo systemctl stop nginx || true
+        echo "✅ 现有服务已停止"
         
         # Install and configure Nginx
         if ! command -v nginx &> /dev/null; then
+            echo "🌐 安装 Nginx..."
             sudo yum install -y nginx
+            echo "✅ Nginx 安装完成"
+        else
+            echo "✅ Nginx 已安装"
         fi
+        
+        echo "🌐 配置 Nginx..."
         sudo cp nginx.conf /etc/nginx/nginx.conf
         sudo systemctl start nginx
         sudo systemctl enable nginx
+        echo "✅ Nginx 配置完成"
         
         # Start backend service
+        echo "⚙️ 启动后端服务..."
         cd /opt/itwords
         nohup java -jar backend.jar --spring.config.location=application.properties > app.log 2>&1 &
+        echo "✅ 后端服务启动完成"
         
-        echo "✅ Deployment completed successfully!"
-        echo "Frontend: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
-        echo "Backend API: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8080"
+        # Wait for services to start
+        echo "⏳ 等待服务启动..."
+        sleep 10
+        
+        echo "================================================="
+        echo "🎉 IT Words Learning 部署完成！"
+        echo "================================================="
+        echo "🌐 前端访问地址: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
+        echo "⚙️ 后端 API 地址: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8080"
+        echo "📊 健康检查: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8080/actuator/health"
+        echo "================================================="
         EOF
         
         chmod +x deploy/deploy.sh
+        echo "✅ EC2 部署脚本创建完成"
         
         # Create archive
+        echo "📦 创建部署压缩包..."
         tar -czf deployment.tar.gz -C deploy .
+        echo "✅ 部署包创建完成"
+        
+        echo "📊 部署包内容:"
+        tar -tzf deployment.tar.gz
 
-    - name: Configure AWS credentials
+    - name: 🔐 配置 AWS 凭证
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
-
-    - name: Upload to S3
+        
+    - name: ✅ AWS 凭证配置完成
       run: |
-        aws s3 cp deployment.tar.gz s3://${{ secrets.S3_BUCKET }}/deployments/deployment-$(date +%Y%m%d-%H%M%S).tar.gz
+        echo "✅ AWS 凭证配置完成"
+        echo "🌍 AWS 区域: ${{ secrets.AWS_REGION }}"
+        echo "🪣 S3 存储桶: ${{ secrets.S3_BUCKET }}"
+
+    - name: 🚀 上传部署包到 S3
+      run: |
+        echo "🚀 开始上传部署包到 S3..."
+        
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+        echo "📅 部署时间戳: $TIMESTAMP"
+        
+        echo "📤 上传带时间戳的部署包..."
+        aws s3 cp deployment.tar.gz s3://${{ secrets.S3_BUCKET }}/deployments/deployment-$TIMESTAMP.tar.gz
+        echo "✅ 带时间戳的部署包上传完成"
+        
+        echo "📤 上传最新版本部署包..."
         aws s3 cp deployment.tar.gz s3://${{ secrets.S3_BUCKET }}/deployments/latest.tar.gz
+        echo "✅ 最新版本部署包上传完成"
+        
+        echo "📊 S3 存储桶内容:"
+        aws s3 ls s3://${{ secrets.S3_BUCKET }}/deployments/ --human-readable
 
-    - name: Deploy to EC2
+    - name: 🌐 部署到 EC2 实例
       run: |
+        echo "🌐 开始部署到 EC2 实例..."
+        echo "🖥️ 目标服务器: ${{ secrets.EC2_HOST }}"
+        
         # Create temporary key file
+        echo "🔑 创建临时密钥文件..."
         echo "${{ secrets.EC2_PRIVATE_KEY }}" > ec2-key.pem
         chmod 600 ec2-key.pem
+        echo "✅ 临时密钥文件创建完成"
         
         # Deploy to EC2
+        echo "🚀 连接到 EC2 实例并执行部署..."
         ssh -i ec2-key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-          # Download latest deployment
+          echo "📥 从 S3 下载最新部署包..."
           aws s3 cp s3://${{ secrets.S3_BUCKET }}/deployments/latest.tar.gz /tmp/
+          echo "✅ 部署包下载完成"
           
-          # Extract and deploy
+          echo "📦 解压部署包..."
           cd /tmp
           tar -xzf latest.tar.gz
           chmod +x deploy.sh
+          echo "✅ 部署包解压完成"
+          
+          echo "🚀 执行部署脚本..."
           ./deploy.sh
           
-          # Cleanup
+          echo "🧹 清理临时文件..."
           rm -rf /tmp/latest.tar.gz /tmp/deploy.sh /tmp/frontend /tmp/backend.jar /tmp/*.sql /tmp/*.conf /tmp/*.yml /tmp/*.properties
+          echo "✅ 临时文件清理完成"
         EOF
         
         # Cleanup
+        echo "🧹 清理本地临时文件..."
         rm -f ec2-key.pem
+        echo "✅ 本地临时文件清理完成"
 
-    - name: Health Check
+    - name: 🔍 应用健康检查
       run: |
-        echo "🔍 Performing health check..."
+        echo "🔍 开始应用健康检查..."
+        echo "⏳ 等待应用启动 (30秒)..."
         sleep 30
         
         # Check if backend is running
+        echo "🔍 检查后端服务健康状态..."
         if curl -f http://${{ secrets.EC2_HOST }}:8080/actuator/health 2>/dev/null; then
-          echo "✅ Backend health check passed"
+          echo "✅ 后端服务健康检查通过"
+          echo "📊 后端服务状态: 运行正常"
         else
-          echo "❌ Backend health check failed"
+          echo "❌ 后端服务健康检查失败"
+          echo "🚨 后端服务可能未正常启动"
           exit 1
         fi
         
         # Check if frontend is accessible
+        echo "🔍 检查前端服务访问状态..."
         if curl -f http://${{ secrets.EC2_HOST }} 2>/dev/null; then
-          echo "✅ Frontend health check passed"
+          echo "✅ 前端服务健康检查通过"
+          echo "📊 前端服务状态: 运行正常"
         else
-          echo "❌ Frontend health check failed"
+          echo "❌ 前端服务健康检查失败"
+          echo "🚨 前端服务可能未正常启动"
           exit 1
         fi
+        
+        echo "🎉 所有服务健康检查通过！"
 
-    - name: Notify deployment status
+    - name: 📋 部署状态通知
       if: always()
       run: |
+        echo "================================================="
         if [ "${{ job.status }}" == "success" ]; then
-          echo "🎉 Deployment successful!"
-          echo "Frontend: http://${{ secrets.EC2_HOST }}"
-          echo "Backend API: http://${{ secrets.EC2_HOST }}:8080"
+          echo "🎉 IT Words Learning 部署成功！"
+          echo "================================================="
+          echo "🌐 前端访问地址: http://${{ secrets.EC2_HOST }}"
+          echo "⚙️ 后端 API 地址: http://${{ secrets.EC2_HOST }}:8080"
+          echo "📊 健康检查地址: http://${{ secrets.EC2_HOST }}:8080/actuator/health"
+          echo "📅 部署时间: $(date '+%Y-%m-%d %H:%M:%S')"
+          echo "🚀 部署环境: AWS EC2"
+          echo "================================================="
+          echo "🎯 可以开始使用 IT Words Learning 系统了！"
         else
-          echo "💥 Deployment failed!"
+          echo "💥 IT Words Learning 部署失败！"
+          echo "================================================="
+          echo "🚨 部署过程中出现错误，请检查日志"
+          echo "📋 常见问题排查:"
+          echo "   1. 检查 GitHub Secrets 配置"
+          echo "   2. 检查 AWS 权限设置"
+          echo "   3. 检查 EC2 实例状态"
+          echo "   4. 检查网络连接"
+          echo "================================================="
         fi
 
   cleanup:
@@ -244,16 +412,29 @@ jobs:
     if: always()
     
     steps:
-    - name: Cleanup old deployments
+    - name: 🧹 清理旧部署文件
       run: |
+        echo "🧹 开始清理 S3 中的旧部署文件..."
+        
         # Configure AWS
+        echo "🔐 配置 AWS 凭证..."
         aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws configure set default.region ${{ secrets.AWS_REGION }}
+        echo "✅ AWS 凭证配置完成"
+        
+        echo "📊 当前 S3 存储桶内容:"
+        aws s3 ls s3://${{ secrets.S3_BUCKET }}/deployments/ --human-readable
         
         # Keep only last 5 deployments
+        echo "🗂️ 保留最近 5 个部署文件，删除其他旧文件..."
         aws s3 ls s3://${{ secrets.S3_BUCKET }}/deployments/ | sort | head -n -5 | awk '{print $4}' | while read file; do
-          if [[ "$file" != "latest.tar.gz" ]]; then
+          if [[ "$file" != "latest.tar.gz" && "$file" != "" ]]; then
+            echo "🗑️ 删除旧部署文件: $file"
             aws s3 rm s3://${{ secrets.S3_BUCKET }}/deployments/$file
           fi
-        done 
+        done
+        
+        echo "✅ 旧部署文件清理完成"
+        echo "📊 清理后 S3 存储桶内容:"
+        aws s3 ls s3://${{ secrets.S3_BUCKET }}/deployments/ --human-readable 
