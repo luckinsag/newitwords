@@ -28,6 +28,26 @@ jobs:
         echo "☕ Java 版本: ${{ env.JAVA_VERSION }}"
         echo "================================================="
 
+    - name: 🔍 检查项目结构
+      run: |
+        echo "🔍 检查项目根目录结构..."
+        ls -la
+        echo ""
+        echo "📁 检查 code-and-project-files 目录..."
+        ls -la code-and-project-files/ || echo "❌ code-and-project-files 目录不存在"
+        echo ""
+        echo "📁 检查 project-structure 目录..."
+        ls -la project-structure/ || echo "❌ project-structure 目录不存在"
+        echo ""
+        echo "📁 检查 project-structure/frontend-app 目录..."
+        ls -la project-structure/frontend-app/ || echo "❌ project-structure/frontend-app 目录不存在"
+        echo ""
+        echo "📁 检查 project-structure/backend-api 目录..."
+        ls -la project-structure/backend-api/ || echo "❌ project-structure/backend-api 目录不存在"
+        echo ""
+        echo "📁 检查 scripts-and-configs 目录..."
+        ls -la scripts-and-configs/ || echo "❌ scripts-and-configs 目录不存在"
+
     - name: 🔧 配置 Node.js 环境
       uses: actions/setup-node@v4
       with:
@@ -70,6 +90,65 @@ jobs:
         mkdir -p build/backend-api
         echo "✅ 构建目录创建完成"
         
+        # 检查必需文件是否存在
+        echo "🔍 检查必需的前端文件..."
+        if [ ! -f "code-and-project-files/package.json" ]; then
+          echo "❌ package.json 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "code-and-project-files/package-lock.json" ]; then
+          echo "❌ package-lock.json 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "code-and-project-files/vite.config.js" ]; then
+          echo "❌ vite.config.js 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "code-and-project-files/index.html" ]; then
+          echo "❌ index.html 文件不存在"
+          exit 1
+        fi
+        if [ ! -d "project-structure/frontend-app/src" ]; then
+          echo "❌ project-structure/frontend-app/src 目录不存在"
+          exit 1
+        fi
+        if [ ! -d "project-structure/frontend-app/public" ]; then
+          echo "❌ project-structure/frontend-app/public 目录不存在"
+          exit 1
+        fi
+        if [ ! -f "code-and-project-files/App.vue" ]; then
+          echo "❌ App.vue 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "code-and-project-files/main.js" ]; then
+          echo "❌ main.js 文件不存在"
+          exit 1
+        fi
+        echo "✅ 前端必需文件检查通过"
+        
+        echo "🔍 检查必需的后端文件..."
+        if [ ! -f "code-and-project-files/pom.xml" ]; then
+          echo "❌ pom.xml 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "code-and-project-files/mvnw" ]; then
+          echo "❌ mvnw 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "code-and-project-files/mvnw.cmd" ]; then
+          echo "❌ mvnw.cmd 文件不存在"
+          exit 1
+        fi
+        if [ ! -d "project-structure/backend-api/src" ]; then
+          echo "❌ project-structure/backend-api/src 目录不存在"
+          exit 1
+        fi
+        if [ ! -d "project-structure/backend-api/.mvn" ]; then
+          echo "❌ project-structure/backend-api/.mvn 目录不存在"
+          exit 1
+        fi
+        echo "✅ 后端必需文件检查通过"
+        
         # Copy frontend files
         echo "🎨 复制前端文件..."
         cp code-and-project-files/package.json build/frontend-app/
@@ -92,12 +171,21 @@ jobs:
         cp -r project-structure/backend-api/.mvn build/backend-api/
         echo "✅ 后端文件复制完成"
         
+        echo "📊 检查复制后的文件结构..."
+        echo "前端构建目录:"
+        ls -la build/frontend-app/
+        echo "后端构建目录:"
+        ls -la build/backend-api/
+        
         echo "🎉 项目文件准备完成！"
         
     - name: 🎨 构建前端应用
       run: |
         echo "🎨 开始构建前端应用..."
         cd build/frontend-app
+        
+        echo "📊 当前目录内容:"
+        ls -la
         
         echo "📦 安装前端依赖..."
         npm ci
@@ -114,6 +202,9 @@ jobs:
       run: |
         echo "⚙️ 开始构建后端应用..."
         cd build/backend-api
+        
+        echo "📊 当前目录内容:"
+        ls -la
         
         echo "🔑 设置执行权限..."
         chmod +x mvnw
@@ -140,6 +231,26 @@ jobs:
         echo "⚙️ 复制后端 JAR 文件..."
         cp build/backend-api/target/*.jar deploy/backend.jar
         echo "✅ 后端 JAR 文件复制完成"
+        
+        # 检查部署脚本文件是否存在
+        echo "🔍 检查部署脚本和配置文件..."
+        if [ ! -f "scripts-and-configs/database-setup.sql" ]; then
+          echo "❌ database-setup.sql 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "scripts-and-configs/nginx.conf" ]; then
+          echo "❌ nginx.conf 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "scripts-and-configs/docker-compose.yml" ]; then
+          echo "❌ docker-compose.yml 文件不存在"
+          exit 1
+        fi
+        if [ ! -f "scripts-and-configs/production.properties" ]; then
+          echo "❌ production.properties 文件不存在"
+          exit 1
+        fi
+        echo "✅ 部署脚本和配置文件检查通过"
         
         # Copy deployment scripts
         echo "📋 复制部署脚本和配置文件..."
@@ -403,6 +514,7 @@ jobs:
           echo "   2. 检查 AWS 权限设置"
           echo "   3. 检查 EC2 实例状态"
           echo "   4. 检查网络连接"
+          echo "   5. 检查项目文件结构"
           echo "================================================="
         fi
 
