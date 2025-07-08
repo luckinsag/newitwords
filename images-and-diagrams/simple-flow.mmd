@@ -1,0 +1,20 @@
+flowchart TD
+    A[原始文件] --> B{文件类型}
+    
+    B -->|Mermaid .mmd| C[Mermaid CLI]
+    B -->|HTML网页| D[浏览器截图]
+    B -->|SVG文件| E[ImageMagick/Inkscape]
+    
+    C --> F1[mmdc -i file.mmd -o output.png]
+    D --> F2[开发者工具 → Screenshot]
+    E --> F3[convert file.svg output.png]
+    
+    F1 --> G[📸 PNG图片]
+    F2 --> G
+    F3 --> G
+    
+    style A fill:#e1f5fe
+    style G fill:#e8f5e8
+    style C fill:#fff3e0
+    style D fill:#fff3e0
+    style E fill:#fff3e0 

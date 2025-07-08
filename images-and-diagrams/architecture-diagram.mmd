@@ -1,0 +1,133 @@
+graph TB
+    %% 客户端层
+    subgraph "客户端层"
+        Frontend["Vue.js 前端<br/>- 用户界面<br/>- HTTP请求发送<br/>- 响应数据处理"]
+    end
+
+    %% Spring Boot 应用层级
+    subgraph "Spring Boot 应用"
+        %% 表现层
+        subgraph "表现层 (Controller)"
+            AuthController["AuthController<br/>认证控制器<br/>- /api/auth/*<br/>- 登录/注册接口"]
+            WordController["WordController<br/>单词控制器<br/>- /api/words/*<br/>- 单词查询接口"]
+            UserNoteController["UserNoteController<br/>用户笔记控制器<br/>- /api/userNotes/*<br/>- 笔记管理接口"]
+            UserSettingsController["UserSettingsController<br/>用户设置控制器<br/>- /api/user/settings/*<br/>- 设置更新接口"]
+            UserTestController["UserTestController<br/>测试控制器<br/>- /api/userTest/*<br/>- 测试记录接口"]
+        end
+
+        %% 业务逻辑层
+        subgraph "业务逻辑层 (Service)"
+            UserService["UserService<br/>用户服务<br/>- 用户认证<br/>- 用户注册<br/>- 密码加密"]
+            WordService["WordService<br/>单词服务<br/>- 单词查询<br/>- 分类筛选"]
+            UserNoteService["UserNoteService<br/>笔记服务<br/>- 笔记增删改查<br/>- 重点单词管理"]
+            UserSettingsService["UserSettingsService<br/>设置服务<br/>- 个性化配置<br/>- 设置更新"]
+            UserTestService["UserTestService<br/>测试服务<br/>- 测试记录<br/>- 成绩统计"]
+        end
+
+        %% 数据访问层
+        subgraph "数据访问层 (Mapper/DAO)"
+            UserMapper["UserMapper<br/>用户数据访问<br/>- 用户CRUD<br/>- 用户设置操作"]
+            WordMapper["WordMapper<br/>单词数据访问<br/>- 单词查询<br/>- 分类查询"]
+            UserNoteMapper["UserNoteMapper<br/>笔记数据访问<br/>- 笔记CRUD<br/>- 用户笔记关联"]
+            UserSettingsMapper["UserSettingsMapper<br/>设置数据访问<br/>- 设置更新"]
+            UserTestMapper["UserTestMapper<br/>测试数据访问<br/>- 测试记录存储"]
+        end
+
+        %% 横切关注点
+        subgraph "横切关注点"
+            GlobalExceptionHandler["GlobalExceptionHandler<br/>全局异常处理器<br/>- 统一异常捕获<br/>- 错误响应格式化"]
+            SecurityConfig["SecurityConfig<br/>安全配置<br/>- 密码加密<br/>- 权限控制"]
+        end
+
+        %% 数据传输对象
+        subgraph "数据传输对象 (DTO)"
+            LoginDTO["LoginDTO<br/>登录数据传输"]
+            RegisterDTO["RegisterDTO<br/>注册数据传输"]
+            UserDTO["UserDTO<br/>用户数据传输"]
+            UserNoteDTO["UserNoteDTO<br/>笔记数据传输"]
+            UserSettingsUpdateDTO["UserSettingsUpdateDTO<br/>设置更新传输"]
+        end
+
+        %% 实体类
+        subgraph "实体层 (Entity)"
+            User["User<br/>用户实体<br/>- userId<br/>- username<br/>- password"]
+            Word["Word<br/>单词实体<br/>- wordId<br/>- japanese<br/>- chinese<br/>- english<br/>- category"]
+            UserNote["UserNote<br/>用户笔记实体<br/>- noteId<br/>- userId<br/>- wordId<br/>- memo"]
+            UserSettings["UserSettings<br/>用户设置实体<br/>- settingsId<br/>- userId<br/>- fontSize<br/>- backgroundColor"]
+        end
+
+        %% 统一响应
+        subgraph "响应封装"
+            Result["Result&lt;T&gt;<br/>统一响应结果<br/>- code: 状态码<br/>- message: 提示信息<br/>- data: 返回数据"]
+        end
+    end
+
+    %% 数据库层
+    subgraph "数据持久层"
+        MySQL["MySQL 数据库<br/>- users 用户表<br/>- words 单词表<br/>- user_notes 用户笔记表<br/>- user_settings 用户设置表<br/>- user_tests 测试记录表"]
+        MyBatis["MyBatis 框架<br/>- SQL映射<br/>- 结果映射<br/>- 动态SQL"]
+    end
+
+    %% 请求流向
+    Frontend -->|HTTP Request| AuthController
+    Frontend -->|HTTP Request| WordController
+    Frontend -->|HTTP Request| UserNoteController
+    Frontend -->|HTTP Request| UserSettingsController
+    Frontend -->|HTTP Request| UserTestController
+
+    %% Controller -> Service
+    AuthController -->|调用业务逻辑| UserService
+    WordController -->|调用业务逻辑| WordService
+    UserNoteController -->|调用业务逻辑| UserNoteService
+    UserSettingsController -->|调用业务逻辑| UserSettingsService
+    UserTestController -->|调用业务逻辑| UserTestService
+
+    %% Service -> Mapper
+    UserService -->|数据访问| UserMapper
+    WordService -->|数据访问| WordMapper
+    UserNoteService -->|数据访问| UserNoteMapper
+    UserSettingsService -->|数据访问| UserSettingsMapper
+    UserTestService -->|数据访问| UserTestMapper
+
+    %% Mapper -> Database
+    UserMapper -->|SQL执行| MyBatis
+    WordMapper -->|SQL执行| MyBatis
+    UserNoteMapper -->|SQL执行| MyBatis
+    UserSettingsMapper -->|SQL执行| MyBatis
+    UserTestMapper -->|SQL执行| MyBatis
+    MyBatis -->|数据库操作| MySQL
+
+    %% 数据流向
+    UserService -.->|使用| User
+    UserService -.->|使用| UserSettings
+    WordService -.->|使用| Word
+    UserNoteService -.->|使用| UserNote
+
+    %% DTO 使用关系
+    AuthController -.->|使用| LoginDTO
+    AuthController -.->|使用| RegisterDTO
+    AuthController -.->|使用| UserDTO
+    UserNoteController -.->|使用| UserNoteDTO
+    UserSettingsController -.->|使用| UserSettingsUpdateDTO
+
+    %% 统一响应
+    AuthController -->|返回| Result
+    WordController -->|返回| Result
+    UserNoteController -->|返回| Result
+    UserSettingsController -->|返回| Result
+    UserTestController -->|返回| Result
+
+    %% 异常处理
+    UserService -.->|抛出异常| GlobalExceptionHandler
+    WordService -.->|抛出异常| GlobalExceptionHandler
+    UserNoteService -.->|抛出异常| GlobalExceptionHandler
+
+    %% 安全配置
+    UserService -.->|使用| SecurityConfig
+
+    style Frontend fill:#e1f5fe
+    style MySQL fill:#f3e5f5
+    style MyBatis fill:#f3e5f5
+    style GlobalExceptionHandler fill:#fff3e0
+    style SecurityConfig fill:#fff3e0
+    style Result fill:#e8f5e8 
